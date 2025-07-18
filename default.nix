@@ -31,6 +31,8 @@ stdenv.mkDerivation {
       cp -r opt/proton-cachyos/* $out/
     elif [ -d "usr/share/proton-cachyos" ]; then
       cp -r usr/share/proton-cachyos/* $out/
+    elif [ -d "usr/share/steam/compatibilitytools.d/proton-cachyos" ]; then
+      cp -r usr/share/steam/compatibilitytools.d/proton-cachyos/* $out/
     else
       # Fallback: copy everything
       cp -r * $out/
