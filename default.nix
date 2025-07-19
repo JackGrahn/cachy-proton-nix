@@ -1,10 +1,10 @@
 { lib
-, stdenv
+, stdenvNoCC
 , fetchurl
 , zstd
 }:
 
-stdenv.mkDerivation {
+stdenvNoCC.mkDerivation {
   pname = "proton-cachyos";
   version = "1:10.0.20250714-1";
 
@@ -15,6 +15,11 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [ zstd ];
 
+  outputs = [
+    "out"
+    "steamcompattool"
+  ];
+
   unpackPhase = ''
     runHook preUnpack
     tar -xf $src
@@ -24,28 +29,37 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
     
-    mkdir -p $out
-    
-    # Find and copy the proton directory
-    if [ -d "opt/proton-cachyos" ]; then
-      cp -r opt/proton-cachyos/* $out/
+    # Make it impossible to add to an environment. Use programs.steam.extraCompatPackages instead.
+    echo "proton-cachyos should not be installed into environments. Please use programs.steam.extraCompatPackages instead." > $out
+
+    # Extract the proton directory for steamcompattool output
+    if [ -d "usr/share/steam/compatibilitytools.d/proton-cachyos" ]; then
+      proton_dir="usr/share/steam/compatibilitytools.d/proton-cachyos"
+    elif [ -d "opt/proton-cachyos" ]; then
+      proton_dir="opt/proton-cachyos"
     elif [ -d "usr/share/proton-cachyos" ]; then
-      cp -r usr/share/proton-cachyos/* $out/
-    elif [ -d "usr/share/steam/compatibilitytools.d/proton-cachyos" ]; then
-      cp -r usr/share/steam/compatibilitytools.d/proton-cachyos/* $out/
+      proton_dir="usr/share/proton-cachyos"
     else
-      # Fallback: copy everything
-      cp -r * $out/
+      echo "Could not find proton directory"
+      exit 1
     fi
+
+    mkdir $steamcompattool
+    cp -r "$proton_dir"/* $steamcompattool/
     
     runHook postInstall
   '';
 
   meta = with lib; {
-    description = "CachyOS Proton compatibility layer for Steam Play";
+    description = ''
+      CachyOS Proton compatibility layer for Steam Play.
+
+      (This is intended for use in the `programs.steam.extraCompatPackages` option only.)
+    '';
     homepage = "https://cachyos.org/";
     license = licenses.unfree;
     platforms = [ "x86_64-linux" ];
     maintainers = [ ];
+    sourceProvenance = [ sourceTypes.binaryNativeCode ];
   };
 }
