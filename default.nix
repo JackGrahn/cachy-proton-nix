@@ -54,6 +54,9 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     # Ensure all files have correct permissions
     chmod -R u+w $steamcompattool/
     
+    # Add the missing require_tool_appid to toolmanifest.vdf for UMU compatibility
+    printf '"manifest"\n{\n  "version" "2"\n  "commandline" "/proton %%verb%%"\n  "require_tool_appid" "1628350"\n  "use_sessions" "1"\n  "compatmanager_layer_name" "proton"\n}\n' > "$steamcompattool/toolmanifest.vdf"
+    
     runHook postInstall
   '';
 
