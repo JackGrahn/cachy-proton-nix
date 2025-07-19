@@ -61,6 +61,10 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     # Update the display name in the compatibility tool definition
     substituteInPlace "$steamcompattool/compatibilitytool.vdf" \
       --replace-fail '"display_name" "proton-cachyos (native package)"' '"display_name" "CachyOS Proton"'
+    
+    # Add require_tool_appid to toolmanifest.vdf for UMU/Lutris compatibility
+    # Insert it after the commandline but before use_sessions
+    sed -i '/^  "commandline" "\/proton %verb%"$/a \  "require_tool_appid" "1628350"' "$steamcompattool/toolmanifest.vdf"
   '';
 
   meta = with lib; {
