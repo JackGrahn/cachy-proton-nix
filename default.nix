@@ -4,7 +4,7 @@
 , zstd
 }:
 
-stdenvNoCC.mkDerivation {
+stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "proton-cachyos";
   version = "1:10.0.20250714-1";
 
@@ -14,6 +14,9 @@ stdenvNoCC.mkDerivation {
   };
 
   nativeBuildInputs = [ zstd ];
+
+  dontConfigure = true;
+  dontBuild = true;
 
   outputs = [
     "out"
@@ -30,9 +33,9 @@ stdenvNoCC.mkDerivation {
     runHook preInstall
     
     # Make it impossible to add to an environment. Use programs.steam.extraCompatPackages instead.
-    echo "proton-cachyos should not be installed into environments. Please use programs.steam.extraCompatPackages instead." > $out
+    echo "${finalAttrs.pname} should not be installed into environments. Please use programs.steam.extraCompatPackages instead." > $out
 
-    # Extract the proton directory for steamcompattool output
+    # Find the proton directory
     if [ -d "usr/share/steam/compatibilitytools.d/proton-cachyos" ]; then
       proton_dir="usr/share/steam/compatibilitytools.d/proton-cachyos"
     elif [ -d "opt/proton-cachyos" ]; then
@@ -44,10 +47,20 @@ stdenvNoCC.mkDerivation {
       exit 1
     fi
 
+    # Create steamcompattool output and copy everything preserving structure
     mkdir $steamcompattool
     cp -r "$proton_dir"/* $steamcompattool/
     
+    # Ensure all files have correct permissions
+    chmod -R u+w $steamcompattool/
+    
     runHook postInstall
+  '';
+
+  preFixup = ''
+    # Update the display name in the compatibility tool definition
+    substituteInPlace "$steamcompattool/compatibilitytool.vdf" \
+      --replace-fail '"display_name" "proton-cachyos (native package)"' '"display_name" "CachyOS Proton"'
   '';
 
   meta = with lib; {
@@ -62,4 +75,4 @@ stdenvNoCC.mkDerivation {
     maintainers = [ ];
     sourceProvenance = [ sourceTypes.binaryNativeCode ];
   };
-}
+})
