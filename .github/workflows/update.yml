@@ -26,13 +26,41 @@ jobs:
           CURRENT_VERSION=$(grep 'version = ' default.nix | sed 's/.*version = "\(.*\)";/\1/')
           echo "Current version: $CURRENT_VERSION"
           
-          # Get latest SLR release from GitHub API
-          LATEST_TAG=$(curl -s "https://api.github.com/repos/CachyOS/proton-cachyos/releases" | \
-            jq -r '.[] | select(.tag_name | contains("-slr")) | .tag_name' | \
-            head -1)
+          # Get latest SLR release from GitHub API with error handling
+          echo "Fetching releases from GitHub API..."
+          API_RESPONSE=$(curl -s -w "%{http_code}" "https://api.github.com/repos/CachyOS/proton-cachyos/releases")
+          HTTP_CODE="${API_RESPONSE: -3}"
+          JSON_RESPONSE="${API_RESPONSE%???}"
+          
+          echo "HTTP Status Code: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Error: GitHub API returned HTTP $HTTP_CODE"
+            echo "Response: $JSON_RESPONSE"
+            exit 1
+          fi
+          
+          # Check if response is valid JSON and contains releases
+          if ! echo "$JSON_RESPONSE" | jq empty 2>/dev/null; then
+            echo "Error: Invalid JSON response from GitHub API"
+            echo "Response: $JSON_RESPONSE"
+            exit 1
+          fi
+          
+          # Check if response is an array
+          if [ "$(echo "$JSON_RESPONSE" | jq 'type')" != '"array"' ]; then
+            echo "Error: GitHub API response is not an array"
+            echo "Response type: $(echo "$JSON_RESPONSE" | jq 'type')"
+            echo "Response: $JSON_RESPONSE"
+            exit 1
+          fi
+          
+          LATEST_TAG=$(echo "$JSON_RESPONSE" | jq -r '.[] | select(.tag_name | contains("-slr")) | .tag_name' | head -1)
           
           if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" = "null" ]; then
             echo "Error: Could not find SLR release"
+            echo "Available releases:"
+            echo "$JSON_RESPONSE" | jq -r '.[].tag_name' | head -10
             exit 1
           fi
           
