@@ -90,7 +90,7 @@ jobs:
           echo "Calculating hash for: $URL"
           
           HASH=$(nix-prefetch-url --unpack "$URL")
-          SRI_HASH=$(nix hash convert --to-sri sha256:$HASH)
+          SRI_HASH=$(nix hash convert --to sri sha256:$HASH)
           echo "Hash: $HASH"
           echo "SRI Hash: $SRI_HASH"
           echo "sri_hash=$SRI_HASH" >> $GITHUB_OUTPUT
