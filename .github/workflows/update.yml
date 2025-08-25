@@ -101,8 +101,8 @@ jobs:
           # Update version
           sed -i 's/version = ".*";/version = "${{ steps.check_version.outputs.latest_version }}";/' default.nix
           
-          # Update hash (using SRI format)
-          sed -i 's/hash = ".*";/hash = "${{ steps.calc_hash.outputs.sri_hash }}";/' default.nix
+          # Update hash (using SRI format) - use | as delimiter to avoid issues with / in hash
+          sed -i 's|hash = ".*";|hash = "${{ steps.calc_hash.outputs.sri_hash }}";|' default.nix
 
       - name: Create Pull Request
         if: steps.check_version.outputs.update_needed == 'true'
