@@ -86,14 +86,25 @@ jobs:
         if: steps.check_version.outputs.update_needed == 'true'
         id: calc_hash
         run: |
-          URL="https://github.com/CachyOS/proton-cachyos/releases/download/${{ steps.check_version.outputs.latest_tag }}/proton-cachyos-${{ steps.check_version.outputs.latest_version }}-x86_64_v3.tar.xz"
-          echo "Calculating hash for: $URL"
+          # Calculate hash for v3
+          URL_V3="https://github.com/CachyOS/proton-cachyos/releases/download/${{ steps.check_version.outputs.latest_tag }}/proton-cachyos-${{ steps.check_version.outputs.latest_version }}-x86_64_v3.tar.xz"
+          echo "Calculating hash for v3: $URL_V3"
           
-          HASH=$(nix-prefetch-url --unpack "$URL")
-          SRI_HASH=$(nix hash convert --to sri sha256:$HASH)
-          echo "Hash: $HASH"
-          echo "SRI Hash: $SRI_HASH"
-          echo "sri_hash=$SRI_HASH" >> $GITHUB_OUTPUT
+          HASH_V3=$(nix-prefetch-url --unpack "$URL_V3")
+          SRI_HASH_V3=$(nix hash convert --to sri sha256:$HASH_V3)
+          echo "V3 Hash: $HASH_V3"
+          echo "V3 SRI Hash: $SRI_HASH_V3"
+          echo "sri_hash_v3=$SRI_HASH_V3" >> $GITHUB_OUTPUT
+          
+          # Calculate hash for v4
+          URL_V4="https://github.com/CachyOS/proton-cachyos/releases/download/${{ steps.check_version.outputs.latest_tag }}/proton-cachyos-${{ steps.check_version.outputs.latest_version }}-x86_64_v4.tar.xz"
+          echo "Calculating hash for v4: $URL_V4"
+          
+          HASH_V4=$(nix-prefetch-url --unpack "$URL_V4")
+          SRI_HASH_V4=$(nix hash convert --to sri sha256:$HASH_V4)
+          echo "V4 Hash: $HASH_V4"
+          echo "V4 SRI Hash: $SRI_HASH_V4"
+          echo "sri_hash_v4=$SRI_HASH_V4" >> $GITHUB_OUTPUT
 
       - name: Update default.nix
         if: steps.check_version.outputs.update_needed == 'true'
@@ -101,8 +112,11 @@ jobs:
           # Update version
           sed -i 's/version = ".*";/version = "${{ steps.check_version.outputs.latest_version }}";/' default.nix
           
-          # Update hash (using SRI format) - use | as delimiter to avoid issues with / in hash
-          sed -i 's|hash = ".*";|hash = "${{ steps.calc_hash.outputs.sri_hash }}";|' default.nix
+          # Update v3 hash - find the line with 'then' and replace the hash on that line
+          sed -i '/then "sha256-/s|"sha256-[^"]*"|"${{ steps.calc_hash.outputs.sri_hash_v3 }}"|' default.nix
+          
+          # Update v4 hash - find the line with 'else' and replace the hash on that line
+          sed -i '/else "sha256-/s|"sha256-[^"]*"|"${{ steps.calc_hash.outputs.sri_hash_v4 }}"|' default.nix
 
       - name: Create Pull Request
         if: steps.check_version.outputs.update_needed == 'true'

@@ -15,8 +15,13 @@
     in
     {
       packages.${system} = {
-        default = self.packages.${system}.proton-cachyos;
-        proton-cachyos = pkgs.callPackage ./default.nix { };
+        default = self.packages.${system}.proton-cachyos-v3;
+        proton-cachyos-v3 = pkgs.callPackage ./default.nix { 
+          microarch = "v3"; 
+        };
+        proton-cachyos-v4 = pkgs.callPackage ./default.nix { 
+          microarch = "v4"; 
+        };
       };
 
       devShells.${system}.default = pkgs.mkShell {

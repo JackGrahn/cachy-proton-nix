@@ -1,16 +1,27 @@
-{ lib
-, stdenvNoCC
-, fetchzip
+{
+  lib,
+  stdenvNoCC,
+  fetchzip,
+  microarch ? "v3", # Default to v3 for backwards compatibility
 }:
 
 stdenvNoCC.mkDerivation (finalAttrs: {
-  pname = "proton-cachyos";
+  pname = "proton-cachyos-${microarch}";
   version = "10.0-20251107-slr";
 
   src = fetchzip {
-    url = "https://github.com/CachyOS/proton-cachyos/releases/download/cachyos-${finalAttrs.version}/proton-cachyos-${finalAttrs.version}-x86_64_v3.tar.xz";
-    hash = "sha256-k/qGx1KMZbOsKH5YEiPWk1NOCXZ/N3t7hP45i2VOVWk=";
+    url = "https://github.com/CachyOS/proton-cachyos/releases/download/cachyos-${finalAttrs.version}/proton-cachyos-${finalAttrs.version}-x86_64_${microarch}.tar.xz";
+    hash = if microarch == "v3" 
+      then "sha256-k/qGx1KMZbOsKH5YEiPWk1NOCXZ/N3t7hP45i2VOVWk="
+      else "sha256-RB9JOFm2sx+GyRs/IWvAkcE1v7sjSgouTIMJld26cZQ="; # v4
   };
+
+    
+  # Use a fixed name in the store path regardless of version
+  name = "proton-cachyos-${microarch}";
+  
+  # Rebuild trigger: 2025-11-14-v1
+
 
   dontUnpack = true;
   dontConfigure = true;
@@ -23,7 +34,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
   installPhase = ''
     runHook preInstall
-    
+
     # Make it impossible to add to an environment. Use programs.steam.extraCompatPackages instead.
     echo "${finalAttrs.pname} should not be installed into environments. Please use programs.steam.extraCompatPackages instead." > $out
 
@@ -32,10 +43,14 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     ln -s $src/* $steamcompattool
     rm $steamcompattool/compatibilitytool.vdf
     cp $src/compatibilitytool.vdf $steamcompattool
-    
+
+    # Patch compatibilitytool.vdf to use a fixed display name
+    substituteInPlace $steamcompattool/compatibilitytool.vdf \
+     --replace-fail "proton-cachyos-${finalAttrs.version}-x86_64_${microarch}" "proton-cachyos-${microarch}"
+
+
     runHook postInstall
   '';
-
 
   meta = with lib; {
     description = ''
