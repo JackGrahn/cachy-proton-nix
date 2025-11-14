@@ -2,22 +2,25 @@
   lib,
   stdenvNoCC,
   fetchzip,
+  microarch ? "v3", # Default to v3 for backwards compatibility
 }:
 
 stdenvNoCC.mkDerivation (finalAttrs: {
-  pname = "proton-cachyos";
+  pname = "proton-cachyos-${microarch}";
   version = "10.0-20251107-slr";
 
   src = fetchzip {
-    url = "https://github.com/CachyOS/proton-cachyos/releases/download/cachyos-${finalAttrs.version}/proton-cachyos-${finalAttrs.version}-x86_64_v3.tar.xz";
-    hash = "sha256-k/qGx1KMZbOsKH5YEiPWk1NOCXZ/N3t7hP45i2VOVWk=";
+    url = "https://github.com/CachyOS/proton-cachyos/releases/download/cachyos-${finalAttrs.version}/proton-cachyos-${finalAttrs.version}-x86_64_${microarch}.tar.xz";
+    hash = if microarch == "v3" 
+      then "sha256-k/qGx1KMZbOsKH5YEiPWk1NOCXZ/N3t7hP45i2VOVWk="
+      else "sha256-RB9JOFm2sx+GyRs/IWvAkcE1v7sjSgouTIMJld26cZQ="; # v4
   };
 
     
   # Use a fixed name in the store path regardless of version
-  name = "proton-cachyos";
+  name = "proton-cachyos-${microarch}";
   
-  # Rebuild trigger: 2025-11-13-v4
+  # Rebuild trigger: 2025-11-14-v1
 
 
   dontUnpack = true;
@@ -43,7 +46,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
     # Patch compatibilitytool.vdf to use a fixed display name
     substituteInPlace $steamcompattool/compatibilitytool.vdf \
-     --replace-fail "proton-cachyos-${finalAttrs.version}" "proton-cachyos"
+     --replace-fail "proton-cachyos-${finalAttrs.version}-x86_64_${microarch}" "proton-cachyos-${microarch}"
 
 
     runHook postInstall
