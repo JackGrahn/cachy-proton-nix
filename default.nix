@@ -7,13 +7,13 @@
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "proton-cachyos-${microarch}";
-  version = "10.0-20251222-slr";
+  version = "10.0-20260101-slr";
 
   src = fetchzip {
     url = "https://github.com/CachyOS/proton-cachyos/releases/download/cachyos-${finalAttrs.version}/proton-cachyos-${finalAttrs.version}-x86_64_${microarch}.tar.xz";
     hash = if microarch == "v3" 
-      then "sha256-NmWQ3MonZ0HbtRWA48vcFN9vD0NqvebVDnlW7NrUu9k="
-      else "sha256-f7fpSEB1LzK12CbYiim4jZbcuDUgQtzq3pU0YUfn7Iw="; # v4
+      then "sha256-UoAATcQyNanBm+WV2u3E01H5edLRtH7OosyYQrKsCCI="
+      else "sha256-/dJDBxUAI3FpOZtCVoNsrhBV6QTrksnUdTH7ZdnAZZY="; # v4
   };
 
     
